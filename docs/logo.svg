@@ -9,7 +9,7 @@
       <stop offset="100%" stop-color="#f97316"/>
     </linearGradient>
   </defs>
-  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#bg)"/>
+  <rect x="0" y="0" width="128" height="128" fill="url(#bg)"/>
   <!-- stylized branch + commits -->
   <path fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"
         d="M40 88V48c0-8 6-14 14-14h8M40 88h16M88 34v54"/>

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -10,6 +11,14 @@ struct GitPersonaApp: App {
                 .environment(store)
         }
         .menuBarExtraStyle(.window)
+        .commands {
+            CommandGroup(replacing: .appTermination) {
+                Button("Quit GitPersona") {
+                    NSApp.terminate(nil)
+                }
+                .keyboardShortcut("q", modifiers: .command)
+            }
+        }
 
         Settings {
             SettingsView()

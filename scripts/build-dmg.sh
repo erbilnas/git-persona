@@ -37,6 +37,11 @@ if [[ -z "${EFFECTIVE_SIGN}" && -n "${NOTARY_PROFILE}" ]]; then
   EFFECTIVE_NOTARY=""
 fi
 
+echo "==> Syncing app icons from docs/logo.svg…"
+if [[ -f "${ROOT}/scripts/export-app-icons-from-logo.sh" ]]; then
+  "${ROOT}/scripts/export-app-icons-from-logo.sh"
+fi
+
 echo "==> Building ${CONFIGURATION}…"
 xcodebuild \
   -project "${ROOT}/GitPersona.xcodeproj" \

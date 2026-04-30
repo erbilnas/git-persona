@@ -72,6 +72,9 @@ jobs:
       - name: Xcode version
         run: xcodebuild -version
 
+      - name: Install icon raster tools
+        run: brew install librsvg
+
       - name: Build DMG
         env:
           SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
