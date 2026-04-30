@@ -1,0 +1,6 @@
+// Single source of truth for app versioning.
+// — Bump MARKETING_VERSION for each user-visible release (semver).
+// — Bump CURRENT_PROJECT_VERSION for every build you ship (Integer or period-separated).
+
+MARKETING_VERSION = 1.0.0
+CURRENT_PROJECT_VERSION = 1

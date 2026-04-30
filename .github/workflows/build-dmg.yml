@@ -1,0 +1,62 @@
+# Builds a Release DMG on every push (artifact). On version tags (v*), also attaches the DMG to a GitHub Release.
+# Not Mac App Store — distribution is GitHub-only (releases + optional Actions artifacts).
+
+name: Build DMG
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dmg:
+    runs-on: macos-latest
+    permissions:
+      # Needed to create releases when pushing version tags on the default branch workflow.
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Build DMG
+        env:
+          SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
+          NOTARY_PROFILE: ${{ secrets.NOTARY_PROFILE }}
+        run: ./scripts/build-dmg.sh
+
+      - name: Locate DMG
+        id: dmg
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist/GitPersona-*.dmg)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "error: expected dist/GitPersona-<version>.dmg" >&2
+            ls -la dist || true
+            exit 1
+          fi
+          echo "file=${files[0]}" >> "$GITHUB_OUTPUT"
+          echo "Built artifact: ${files[0]}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GitPersona-macos
+          path: ${{ steps.dmg.outputs.file }}
+          if-no-files-found: error
+
+      - name: Publish GitHub Release (tags only)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.dmg.outputs.file }}
+          generate_release_notes: true
