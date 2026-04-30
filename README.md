@@ -39,9 +39,9 @@ First launch may require allowing the app in **System Settings → Privacy & Sec
 Releases are **semver-driven** with [Changesets](https://github.com/changesets/changesets): while automation runs, `package.json` holds the version; `**npm run version-packages`** syncs into `[GitPersona/Version.xcconfig](GitPersona/Version.xcconfig)` (`MARKETING_VERSION` + bumped `CURRENT_PROJECT_VERSION`).
 
 1. Install tooling: `npm install`
-2. After user-visible work, run `**npm run changeset**`, pick the bump level, and commit the generated file under `.changeset/` with your PR.
+2. After user-visible work, run `**npm run changeset`**, pick the bump level, and commit the generated file under `.changeset/` with your PR.
 3. Merge to `**main**`. The **[Changesets](.github/workflows/changesets.yml)** workflow opens a **Version packages** PR (changelog + version bump + `Version.xcconfig` sync).
-4. Merge **Version packages**. The same workflow runs `**npm run release`**, which creates and pushes tag `**v*.*.***` matching `package.json`.
+4. Merge **Version packages**. The same workflow runs `**npm run release`**, which creates and pushes tag `**v*.*.*`** matching `package.json`.
 5. The **[Build DMG](.github/workflows/build-dmg.yml)** workflow runs on that tag and publishes the **GitHub Release** with `GitPersona-<version>.dmg`.
 
 **Manual escape hatch:** you can still tag by hand (`git tag v1.2.3 && git push origin v1.2.3`) if `MARKETING_VERSION` in `Version.xcconfig` already matches the tag—prefer Changesets so `CHANGELOG.md` stays accurate.
