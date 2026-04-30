@@ -1,6 +1,13 @@
 # GitPersona
 
-`GitPersona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.   
+<p align="center"><img src="docs/logo.svg" alt="GitPersona logo" width="128" height="128"></p>
+
+<p align="center">
+<a href="https://github.com/erbilnas/git-persona/releases"><img src="https://img.shields.io/github/v/release/erbilnas/git-persona?label=release" alt="Latest GitHub release"></a>
+<a href="https://github.com/erbilnas/git-persona/actions/workflows/build-dmg.yml"><img src="https://img.shields.io/github/actions/workflow/status/erbilnas/git-persona/build-dmg.yml?branch=main&label=build" alt="Build DMG workflow status"></a>
+</p>
+
+`GitPersona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.
 
 ---
 
@@ -16,15 +23,14 @@ GitPersona is **not** distributed through the Mac App Store. Install from GitHub
 
 ### From Releases (recommended)
 
-1. Open the repo’s **Releases** page.
-2. **Stable builds:** download `**GitPersona-x.y.z.dmg`** from a **Release** whose tag is `**v*`** (for example `v1.0.0`). Those are created when a `**v*`** tag is pushed.
-3. **Latest `main`/`master`:** open the **Continuous build** pre-release (tag `continuous`) — it is updated on every push to `main` or `master` with the newest DMG.
-4. Open the DMG and drag **GitPersona** into **Applications**.
-5. Launch GitPersona from Applications; it appears as a **menu bar** icon (no Dock tile—`LSUIElement`).
+1. Open the repo’s **[Releases](https://github.com/erbilnas/git-persona/releases)** page.
+2. Download `**GitPersona-x.y.z.dmg`** from the release whose tag is `**v*.*.*`** (for example `v1.0.0`). Installable DMGs are attached only to those versioned releases.
+3. Open the DMG and drag **GitPersona** into **Applications**.
+4. Launch GitPersona from Applications; it appears as a **menu bar** icon (no Dock tile—`LSUIElement`).
 
 ### From CI artifacts
 
-Every push to `**main`** / `**master`** runs **Actions → Build DMG** and uploads the `**GitPersona-macos`** artifact containing the versioned DMG (`GitPersona-x.y.z.dmg`). The same push also refreshes the **Continuous build** pre-release when the workflow completes.
+Pushes to `**main`** / `**master`** and pull requests run **[Build DMG](.github/workflows/build-dmg.yml)** and upload the `**GitPersona-macos`** workflow artifact (the DMG is still named `GitPersona-<version>.dmg` using the version in the branch). That path does **not** create or update a GitHub Release; use it only when you want an unreleased build from CI.
 
 ### Local build
 
@@ -40,7 +46,7 @@ Releases are **semver-driven** with [Changesets](https://github.com/changesets/c
 2. After user-visible work, run `**npm run changeset`**, pick the bump level, and commit the generated file under `.changeset/` with your PR.
 3. Merge to `**main`**. The **[Changesets](.github/workflows/changesets.yml)** workflow opens a **Version packages** PR (changelog + version bump + `Version.xcconfig` sync).
 4. Merge **Version packages**. The same workflow runs `**npm run release`**, which creates and pushes tag `**v*.*.*`** matching `package.json`.
-5. The **[Build DMG](.github/workflows/build-dmg.yml)** workflow runs on that tag and publishes the **GitHub Release** with `GitPersona-<version>.dmg`.
+5. **[Versioned release DMG (post-Changesets)](.github/workflows/versioned-release-after-changesets.yml)** runs after that workflow, builds the DMG, and publishes the **GitHub Release** with `GitPersona-<version>.dmg`. (Tags pushed with the default `GITHUB_TOKEN` do not trigger `**on.push.tags**`, so this follow-up workflow attaches the asset.) If you push a `**v**` tag with credentials that **do** trigger workflows, **[Build DMG](.github/workflows/build-dmg.yml)** publishes the release for that tag instead.
 
 **Manual escape hatch:** you can still tag by hand (`git tag v1.2.3 && git push origin v1.2.3`) if `MARKETING_VERSION` in `Version.xcconfig` already matches the tag—prefer Changesets so `CHANGELOG.md` stays accurate.
 
@@ -176,9 +182,14 @@ The app does **not** open network connections; data stays on disk on your machin
 
 ### CI (GitHub Actions)
 
-On each push to `main` / `master`, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh`, uploads the `**GitPersona-macos`** artifact, and updates the **Continuous build** pre-release (tag `continuous`) with the latest DMG. Pushing a tag matching `**v`*** also creates or updates a **versioned Release** with that DMG attached.
+On each push to `main` / `master` or on pull requests, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh` and uploads the `**GitPersona-macos`** workflow artifact only (no GitHub Release).
 
-`[.github/workflows/changesets.yml](.github/workflows/changesets.yml)` manages **Version packages** PRs and the `**v`*** tag after you merge them (see [Release a new version (Changesets)](#release-a-new-version-changesets)).
+**Versioned releases** with a downloadable DMG:
+
+- After **[Changesets](.github/workflows/changesets.yml)** publishes a `**v**` tag, **[Versioned release DMG (post-Changesets)](.github/workflows/versioned-release-after-changesets.yml)** builds the DMG and creates or updates the **GitHub Release** for that tag.
+- A **manually pushed** `**v**` tag that triggers Actions will run **Build DMG** on the tag push and attach the DMG to that release.
+
+`[.github/workflows/changesets.yml](.github/workflows/changesets.yml)` manages **Version packages** PRs and the `**v**` tag after you merge them (see [Release a new version (Changesets)](#release-a-new-version-changesets)).
 
 The workflow uses the `**macos-26`** GitHub-hosted runner (Xcode 26 + macOS 26 SDK), matching the app’s **macOS 26.0** deployment target and Liquid Glass APIs. Do not use `macos-latest` alone unless that label already maps to a macOS 26 image with Xcode 26 in your org.
 
@@ -248,7 +259,8 @@ git-persona/
 ├── .changeset/
 ├── .github/workflows/
 │   ├── build-dmg.yml
-│   └── changesets.yml
+│   ├── changesets.yml
+│   └── versioned-release-after-changesets.yml
 ├── GitPersona.xcodeproj/
 ├── GitPersona/
 │   ├── GitPersonaApp.swift
