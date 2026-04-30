@@ -1,20 +1,10 @@
-<h1 align="center">GitPersona</h1>
+# GitPersona
 
-<p align="center">
-  <img src="docs/logo.svg" width="112" height="112" alt="GitPersona icon" />
-</p>
 
-<p align="center">
-  <strong><code>git-persona</code></strong> — switch <code>user.name</code>, <code>user.email</code>, and optional <code>user.signingkey</code> per repository or globally, from the menu bar.
-</p>
 
-<p align="center">
-  <a href="https://github.com/erbilnas/git-persona/actions/workflows/build-dmg.yml"><img src="https://github.com/erbilnas/git-persona/actions/workflows/build-dmg.yml/badge.svg?branch=main" alt="Build DMG" /></a>
-  &nbsp;
-  <img src="https://img.shields.io/badge/macOS-26%2B-0d9488?logo=apple&logoColor=white" alt="macOS 26+" />
-  &nbsp;
-  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6" />
-</p>
+`git-persona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.
+
+   
 
 ---
 
@@ -32,23 +22,25 @@ GitPersona is **not** distributed through the Mac App Store. Install from GitHub
 
 ### From Releases (recommended)
 
-1. Open the repo’s **Releases** page and download `**GitPersona-x.y.z.dmg`** (for example `**GitPersona-1.0.0.dmg`**) for the release you want (created automatically when a `**v***` tag is pushed, for example `v1.0.0`).
-2. Open the DMG and drag **GitPersona** into **Applications**.
-3. Launch GitPersona from Applications; it appears as a **menu bar** icon (no Dock tile—`LSUIElement`).
+1. Open the repo’s **Releases** page.
+2. **Stable builds:** download `**GitPersona-x.y.z.dmg`** from a **Release** whose tag is `**v*`** (for example `v1.0.0`). Those are created when a `**v***` tag is pushed.
+3. **Latest `main`/`master`:** open the **Continuous build** pre-release (tag `continuous`) — it is updated on every push to `main` or `master` with the newest DMG.
+4. Open the DMG and drag **GitPersona** into **Applications**.
+5. Launch GitPersona from Applications; it appears as a **menu bar** icon (no Dock tile—`LSUIElement`).
 
 ### From CI artifacts
 
-Every push to `**main`** / `**master`** runs **Actions → Build DMG** and uploads the `**GitPersona-macos`** artifact containing the versioned DMG (`GitPersona-x.y.z.dmg`).
+Every push to `**main`** / `**master`** runs **Actions → Build DMG** and uploads the `**GitPersona-macos`** artifact containing the versioned DMG (`GitPersona-x.y.z.dmg`). The same push also refreshes the **Continuous build** pre-release when the workflow completes.
 
 ### Local build
 
-Run `./scripts/build-dmg.sh` on a Mac with Xcode (see [Building & releasing](#building--releasing)). This writes `**dist/GitPersona-<version>.dmg`** and a symlink `**dist/GitPersona.dmg**` pointing at it.
+Run `./scripts/build-dmg.sh` on a Mac with Xcode (see [Building & releasing](#building--releasing)). This writes `**dist/GitPersona-<version>.dmg`** and a symlink `**dist/GitPersona.dmg`** pointing at it.
 
 First launch may require allowing the app in **System Settings → Privacy & Security** if Gatekeeper blocks unsigned CI builds. For fewer prompts, add **Developer ID** signing and notarization via repository secrets (see below).
 
 ### Release a new version
 
-1. Edit `**[GitPersona/Version.xcconfig](GitPersona/Version.xcconfig)`** — bump `**MARKETING_VERSION`** for the release (semver) and `**CURRENT_PROJECT_VERSION**` for each shipped build as needed.
+1. Edit `**[GitPersona/Version.xcconfig](GitPersona/Version.xcconfig)`** — bump `**MARKETING_VERSION`** for the release (semver) and `**CURRENT_PROJECT_VERSION`** for each shipped build as needed.
 2. Commit and push.
 3. Tag and push:
 
@@ -57,9 +49,9 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-The workflow builds the DMG and publishes a **GitHub Release** with `**GitPersona-<MARKETING_VERSION>.dmg`** attached (filename matches the app bundle’s short version string).
+The workflow builds the DMG and publishes a **GitHub Release** with `**GitPersona-<MARKETING_VERSION>.dmg`** attached (filename matches the app bundle’s short version string). Pushes to `**main`** / `**master**` also update the **Continuous build** pre-release (tag `continuous`) with the latest DMG.
 
-Keep the `**v*`** tag aligned with `**MARKETING_VERSION**` (for example tag `v1.0.1` with `MARKETING_VERSION = 1.0.1`) so release tags and binaries stay easy to match.
+Keep the `**v*`** tag aligned with `**MARKETING_VERSION`** (for example tag `v1.0.1` with `MARKETING_VERSION = 1.0.1`) so release tags and binaries stay easy to match.
 
 ## Usage
 
@@ -108,11 +100,11 @@ flowchart LR
 
 
 
-| Piece                | Responsibility                                                                                                                               |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Piece                | Responsibility                                                                                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **PersonaStore**     | Loads/saves encrypted `personas.store` (AES-GCM, key in Keychain) under `~/Library/Application Support/dev.gitpersona.app/`. Migrates legacy plaintext `personas.json` once, then removes it. |
-| **RepoResolver**     | Runs `git rev-parse --show-toplevel` for a chosen directory to confirm a repo root.                                                          |
-| **GitConfigApplier** | Runs `git config` (`--local` / `--global`) to read and write identity fields; resolves `git` via `/usr/bin/git` or `PATH`.                   |
+| **RepoResolver**     | Runs `git rev-parse --show-toplevel` for a chosen directory to confirm a repo root.                                                                                                           |
+| **GitConfigApplier** | Runs `git config` (`--local` / `--global`) to read and write identity fields; resolves `git` via `/usr/bin/git` or `PATH`.                                                                    |
 
 
 ### Apply flow
@@ -191,9 +183,9 @@ The app does **not** open network connections; data stays on disk on your machin
 
 ### CI (GitHub Actions)
 
-On each push to `main` / `master`, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh` and uploads the `**GitPersona-macos`** artifact (the built `**GitPersona-x.y.z.dmg**`). Pushing a tag matching `**v***` also creates a **Release** with that DMG attached.
+On each push to `main` / `master`, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh`, uploads the `**GitPersona-macos`** artifact, and updates the **Continuous build** pre-release (tag `continuous`) with the latest DMG. Pushing a tag matching `**v*`** also creates or updates a **versioned Release** with that DMG attached.
 
-The workflow uses the **`macos-26`** GitHub-hosted runner (Xcode 26 + macOS 26 SDK), matching the app’s **macOS 26.0** deployment target and Liquid Glass APIs. Do not use `macos-latest` alone unless that label already maps to a macOS 26 image with Xcode 26 in your org.
+The workflow uses the `**macos-26`** GitHub-hosted runner (Xcode 26 + macOS 26 SDK), matching the app’s **macOS 26.0** deployment target and Liquid Glass APIs. Do not use `macos-latest` alone unless that label already maps to a macOS 26 image with Xcode 26 in your org.
 
 Optional repository **secrets** for signed / notarized DMGs (same env vars as locally):
 

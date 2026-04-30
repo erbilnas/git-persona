@@ -1,5 +1,6 @@
-# Builds a Release DMG on every push (artifact). On version tags (v*), also attaches the DMG to a GitHub Release.
-# Not Mac App Store — distribution is GitHub-only (releases + optional Actions artifacts).
+# Builds a Release DMG on every push (artifact).
+# - Push to main/master: rolling pre-release at tag `continuous` + workflow artifact.
+# - Push tag v*: versioned GitHub Release + artifact.
 
 name: Build DMG
 
@@ -53,6 +54,32 @@ jobs:
           name: GitPersona-macos
           path: ${{ steps.dmg.outputs.file }}
           if-no-files-found: error
+
+      - name: Point continuous tag at this commit
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git tag -f continuous "${GITHUB_SHA}"
+          git push -f origin refs/tags/continuous
+
+      - name: Publish rolling pre-release (main/master)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: continuous
+          name: Continuous build
+          prerelease: true
+          make_latest: false
+          files: ${{ steps.dmg.outputs.file }}
+          body: |
+            Latest DMG built from the tip of the default branch (`main` / `master`).
+
+            For a stable, versioned build, use a **Release** whose tag matches `v*.*.*`.
 
       - name: Publish GitHub Release (tags only)
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
