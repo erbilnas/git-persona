@@ -1,14 +1,10 @@
 # GitPersona
 
-
-
 `git-persona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.
 
    
 
 ---
-
-SwiftUI **Liquid Glass** on the popover action bar; standard grouped materials in Settings. **No** analytics or network traffic from the app.
 
 ## Requirements
 
@@ -23,7 +19,7 @@ GitPersona is **not** distributed through the Mac App Store. Install from GitHub
 ### From Releases (recommended)
 
 1. Open the repo’s **Releases** page.
-2. **Stable builds:** download `**GitPersona-x.y.z.dmg`** from a **Release** whose tag is `**v*`** (for example `v1.0.0`). Those are created when a `**v***` tag is pushed.
+2. **Stable builds:** download `**GitPersona-x.y.z.dmg`** from a **Release** whose tag is `**v*`** (for example `v1.0.0`). Those are created when a `**v*`** tag is pushed.
 3. **Latest `main`/`master`:** open the **Continuous build** pre-release (tag `continuous`) — it is updated on every push to `main` or `master` with the newest DMG.
 4. Open the DMG and drag **GitPersona** into **Applications**.
 5. Launch GitPersona from Applications; it appears as a **menu bar** icon (no Dock tile—`LSUIElement`).
@@ -38,20 +34,19 @@ Run `./scripts/build-dmg.sh` on a Mac with Xcode (see [Building & releasing](#bu
 
 First launch may require allowing the app in **System Settings → Privacy & Security** if Gatekeeper blocks unsigned CI builds. For fewer prompts, add **Developer ID** signing and notarization via repository secrets (see below).
 
-### Release a new version
+### Release a new version (Changesets)
 
-1. Edit `**[GitPersona/Version.xcconfig](GitPersona/Version.xcconfig)`** — bump `**MARKETING_VERSION`** for the release (semver) and `**CURRENT_PROJECT_VERSION`** for each shipped build as needed.
-2. Commit and push.
-3. Tag and push:
+Releases are **semver-driven** with [Changesets](https://github.com/changesets/changesets): while automation runs, `package.json` holds the version; `**npm run version-packages`** syncs into `[GitPersona/Version.xcconfig](GitPersona/Version.xcconfig)` (`MARKETING_VERSION` + bumped `CURRENT_PROJECT_VERSION`).
 
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
+1. Install tooling: `npm install`
+2. After user-visible work, run `**npm run changeset**`, pick the bump level, and commit the generated file under `.changeset/` with your PR.
+3. Merge to `**main**`. The **[Changesets](.github/workflows/changesets.yml)** workflow opens a **Version packages** PR (changelog + version bump + `Version.xcconfig` sync).
+4. Merge **Version packages**. The same workflow runs `**npm run release`**, which creates and pushes tag `**v*.*.***` matching `package.json`.
+5. The **[Build DMG](.github/workflows/build-dmg.yml)** workflow runs on that tag and publishes the **GitHub Release** with `GitPersona-<version>.dmg`.
 
-The workflow builds the DMG and publishes a **GitHub Release** with `**GitPersona-<MARKETING_VERSION>.dmg`** attached (filename matches the app bundle’s short version string). Pushes to `**main`** / `**master**` also update the **Continuous build** pre-release (tag `continuous`) with the latest DMG.
+**Manual escape hatch:** you can still tag by hand (`git tag v1.2.3 && git push origin v1.2.3`) if `MARKETING_VERSION` in `Version.xcconfig` already matches the tag—prefer Changesets so `CHANGELOG.md` stays accurate.
 
-Keep the `**v*`** tag aligned with `**MARKETING_VERSION`** (for example tag `v1.0.1` with `MARKETING_VERSION = 1.0.1`) so release tags and binaries stay easy to match.
+`.changeset/config.json` uses `"baseBranch": "main"`. If your default branch is only `master`, change that field to `master`.
 
 ## Usage
 
@@ -183,7 +178,9 @@ The app does **not** open network connections; data stays on disk on your machin
 
 ### CI (GitHub Actions)
 
-On each push to `main` / `master`, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh`, uploads the `**GitPersona-macos`** artifact, and updates the **Continuous build** pre-release (tag `continuous`) with the latest DMG. Pushing a tag matching `**v*`** also creates or updates a **versioned Release** with that DMG attached.
+On each push to `main` / `master`, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh`, uploads the `**GitPersona-macos`** artifact, and updates the **Continuous build** pre-release (tag `continuous`) with the latest DMG. Pushing a tag matching `**v`*** also creates or updates a **versioned Release** with that DMG attached.
+
+`[.github/workflows/changesets.yml](.github/workflows/changesets.yml)` manages **Version packages** PRs and the `**v`*** tag after you merge them (see [Release a new version (Changesets)](#release-a-new-version-changesets)).
 
 The workflow uses the `**macos-26`** GitHub-hosted runner (Xcode 26 + macOS 26 SDK), matching the app’s **macOS 26.0** deployment target and Liquid Glass APIs. Do not use `macos-latest` alone unless that label already maps to a macOS 26 image with Xcode 26 in your org.
 
@@ -250,6 +247,10 @@ Apple’s notarization docs: [Notarizing macOS software before distribution](htt
 
 ```
 git-persona/
+├── .changeset/
+├── .github/workflows/
+│   ├── build-dmg.yml
+│   └── changesets.yml
 ├── GitPersona.xcodeproj/
 ├── GitPersona/
 │   ├── GitPersonaApp.swift
@@ -265,18 +266,22 @@ git-persona/
 ├── docs/
 │   └── logo.svg
 ├── scripts/
-│   └── build-dmg.sh
+│   ├── build-dmg.sh
+│   ├── sync-version-xcconfig.mjs
+│   └── push-release-tag.mjs
+├── package.json
+├── package-lock.json
 └── README.md
 ```
 
 ## Troubleshooting
 
 
-| Issue                         | Suggestion                                                              |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| “Git executable not found”    | Install Xcode Command Line Tools: `xcode-select --install`.             |
-| Apply fails with repo error   | Ensure the folder is inside a Git work tree (`git rev-parse` succeeds). |
-| Settings window does not open | Use the **gear** button in the popover (SwiftUI `Settings` scene).      |
+| Issue                       | Suggestion                                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| “Git executable not found”  | Install Xcode Command Line Tools: `xcode-select --install`.                                                           |
+| Apply fails with repo error | Ensure the folder is inside a Git work tree (`git rev-parse` succeeds).                                               |
+| Version PR never opens      | Ensure `.changeset/*.md` exists on `main` and **Changesets** workflow has `contents: write` + `pull-requests: write`. |
 
 
 ## License

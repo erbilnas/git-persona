@@ -1,6 +1,6 @@
-// Single source of truth for app versioning.
-// — Bump MARKETING_VERSION for each user-visible release (semver).
-// — Bump CURRENT_PROJECT_VERSION for every build you ship (Integer or period-separated).
+// Single source of truth for app versioning (MARKETING_VERSION is synced from package.json by Changesets).
+// — Bump semver via Changesets / Version packages PR; do not hand-edit unless you know why.
+// — CURRENT_PROJECT_VERSION is incremented by scripts/sync-version-xcconfig.mjs on each release bump.
 
 MARKETING_VERSION = 1.0.0
 CURRENT_PROJECT_VERSION = 1
