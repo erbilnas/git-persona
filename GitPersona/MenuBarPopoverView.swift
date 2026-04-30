@@ -103,13 +103,7 @@ struct MenuBarPopoverView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background {
-            if #available(macOS 26.0, *) {
-                Rectangle()
-                    .fill(.clear)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 0))
-            } else {
-                Rectangle().fill(.bar)
-            }
+            Rectangle().fill(.bar)
         }
     }
 

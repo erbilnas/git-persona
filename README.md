@@ -2,12 +2,12 @@
 
 GitPersona logo
 
-**GitPersona** (`git-persona`) is a minimal macOS menu bar utility for switching Git commit identities—`user.name`, `user.email`, and optional `user.signingkey`—per repository or globally. It targets **macOS 26+** and uses SwiftUI **Liquid Glass** materials on floating chrome (popover action bar), aligned with Apple’s design guidance for navigation-layer glass rather than dense list backgrounds.
+**GitPersona** (`git-persona`) is a minimal macOS menu bar utility for switching Git commit identities—`user.name`, `user.email`, and optional `user.signingkey`—per repository or globally. It targets **macOS 15+** and uses SwiftUI **materials** (for example `.ultraThinMaterial` and `.bar`) on floating chrome so it builds cleanly on **Xcode 16** / the macOS 15 SDK (including GitHub Actions), while staying readable in light and dark mode.
 
 ## Requirements
 
-- macOS **26.0** or later  
-- **Xcode 26+** (Swift 6, macOS 26 SDK) to build from source  
+- macOS **15.0** or later  
+- **Xcode 16+** (Swift 6, macOS 15 SDK or newer) to build from source  
 - **Git** installed and available on your `PATH` (typically `/usr/bin/git` or Xcode Command Line Tools)
 
 ## Install (GitHub only — not on the Mac App Store)
@@ -141,17 +141,17 @@ On disk the payload is **encrypted**; the decrypted JSON matches this shape:
 
 If decryption fails (for example truncated file), the app renames the blob to `personas.store.corrupt-<timestamp>` and falls back to legacy `personas.json` when present.
 
-### Liquid Glass UI
+### SwiftUI chrome
 
 - **Popover header**: standard `.background(.bar)` for readability.  
-- **Primary actions** (“Apply to repo” / “Apply globally”): wrapped in `GlassChrome.floatingBar`, which applies `.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 14))` on **macOS 26+**, with a material fallback otherwise.  
-- **Lists / forms**: plain inset/grouped styling—no glass on dense content.
+- **Primary actions** (“Apply to repo” / “Apply globally”): wrapped in `GlassChrome.floatingBar`, which uses `.ultraThinMaterial` in a rounded rectangle so the chrome stays subtle and compiles on the current GitHub Actions toolchain.  
+- **Lists / forms**: plain inset/grouped styling—no heavy materials on dense content.
 
 ## System design
 
 ```mermaid
 flowchart TB
-  subgraph macOS [macOS 26 Host]
+  subgraph macOS [macOS host]
     GP[GitPersona.app]
     FS[(Application Support encrypted store)]
     GC[~/.gitconfig]
@@ -177,7 +177,7 @@ The app does **not** open network connections; data stays on disk on your machin
 
 On each push to `main` / `master`, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh` and uploads the `**GitPersona-macos`** artifact (the built `**GitPersona-x.y.z.dmg**`). Pushing a tag matching `**v***` also creates a **Release** with that DMG attached.
 
-Runners must provide **Xcode 26+** and the **macOS 26 SDK** (same as the app’s deployment target). If `macos-latest` on GitHub is older, switch the workflow to a newer image when available or use a **self-hosted** runner with Xcode 26.
+The workflow uses **`macos-latest`** (Xcode 16.x and the macOS 15 SDK). The project’s deployment target is **macOS 15.0**, so no Xcode 26–only APIs are required for CI.
 
 Optional repository **secrets** for signed / notarized DMGs (same env vars as locally):
 
