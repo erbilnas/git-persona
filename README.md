@@ -7,127 +7,95 @@
 <a href="https://github.com/erbilnas/git-persona/actions/workflows/build-dmg.yml"><img src="https://img.shields.io/github/actions/workflow/status/erbilnas/git-persona/build-dmg.yml?branch=main&label=build" alt="Build DMG workflow status"></a>
 </p>
 
-`GitPersona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.
-
----
+GitPersona is a macOS menu bar app that switches Git author identity—`user.name`, `user.email`, and optional `user.signingkey`—per repository (local config) or globally (`~/.gitconfig`). Personas are named presets you pick from the menu bar window.
 
 ## Requirements
 
-- macOS **26.0** or later  
-- **Xcode 26+** (Swift 6, macOS 26 SDK) to build from source  
-- **Git** installed and available on your `PATH` (typically `/usr/bin/git` or Xcode Command Line Tools)
+| Requirement | Notes |
+|-------------|--------|
+| macOS | **26.0** or later (matches deployment target and Liquid Glass APIs) |
+| Xcode | **26+** with Swift 6 and macOS 26 SDK, to build from source |
+| Git | On your `PATH` (e.g. `/usr/bin/git` or Command Line Tools) |
 
-## Install (GitHub only — not on the Mac App Store)
+## Install
 
-GitPersona is **not** distributed through the Mac App Store. Install from GitHub:
+GitPersona is **not** on the Mac App Store. Use GitHub releases, CI artifacts, or a local build.
 
-### From Releases (recommended)
+### Releases (recommended)
 
-1. Open the repo’s **[Releases](https://github.com/erbilnas/git-persona/releases)** page.
-2. Download `**GitPersona-x.y.z.dmg`** from the release whose tag is `**v*.*.*`** (for example `v1.0.0`). Installable DMGs are attached only to those versioned releases.
+1. Open [Releases](https://github.com/erbilnas/git-persona/releases).
+2. Download `GitPersona-x.y.z.dmg` from a tagged release (e.g. `v1.0.0`). Versioned releases attach the DMG.
 3. Open the DMG and drag **GitPersona** into **Applications**.
-4. Launch GitPersona from Applications; it appears as a **menu bar** icon (no Dock tile—`LSUIElement`).
+4. Launch from Applications. The app lives in the **menu bar** only (`LSUIElement`: no Dock icon).
 
-### From CI artifacts
+### CI artifacts
 
-Pushes to `**main`** / `**master`** and pull requests run **[Build DMG](.github/workflows/build-dmg.yml)** and upload the `**GitPersona-macos`** workflow artifact (the DMG is still named `GitPersona-<version>.dmg` using the version in the branch). That path does **not** create or update a GitHub Release; use it only when you want an unreleased build from CI.
+Pushes to `main` / `master` and pull requests run [Build DMG](.github/workflows/build-dmg.yml) and upload a `GitPersona-macos` workflow artifact (DMG name still includes the project version). These are **not** GitHub Releases—use them for unreleased builds.
 
-### Local build
+### Build DMG locally
 
-Run `./scripts/build-dmg.sh` on a Mac with Xcode (see [Building & releasing](#building--releasing)). This writes `**dist/GitPersona-<version>.dmg`** and a symlink `**dist/GitPersona.dmg`** pointing at it.
+On a Mac with Xcode:
 
-First launch may require allowing the app in **System Settings → Privacy & Security** if Gatekeeper blocks unsigned CI builds. For fewer prompts, add **Developer ID** signing and notarization via repository secrets (see below).
+```bash
+./scripts/build-dmg.sh
+```
 
-### Release a new version (Changesets)
+Output: `dist/GitPersona-<version>.dmg` plus `dist/GitPersona.dmg` → symlink to that file.
 
-Releases are **semver-driven** with [Changesets](https://github.com/changesets/changesets): while automation runs, `package.json` holds the version; `**npm run version-packages`** syncs into `[GitPersona/Version.xcconfig](GitPersona/Version.xcconfig)` (`MARKETING_VERSION` + bumped `CURRENT_PROJECT_VERSION`).
-
-1. Install tooling: `npm install`
-2. After user-visible work, run `**npm run changeset`**, pick the bump level, and commit the generated file under `.changeset/` with your PR.
-3. Merge to `**main`**. The **[Changesets](.github/workflows/changesets.yml)** workflow opens a **Version packages** PR (changelog + version bump + `Version.xcconfig` sync).
-4. Merge **Version packages**. The same workflow runs `**npm run release`**, which creates and pushes tag `**v*.*.*`** matching `package.json`.
-5. **[Versioned release DMG (post-Changesets)](.github/workflows/versioned-release-after-changesets.yml)** runs after that workflow, builds the DMG, and publishes the **GitHub Release** with `GitPersona-<version>.dmg`. (Tags pushed with the default `GITHUB_TOKEN` do not trigger `**on.push.tags**`, so this follow-up workflow attaches the asset.) If you push a `**v**` tag with credentials that **do** trigger workflows, **[Build DMG](.github/workflows/build-dmg.yml)** publishes the release for that tag instead.
-
-**Manual escape hatch:** you can still tag by hand (`git tag v1.2.3 && git push origin v1.2.3`) if `MARKETING_VERSION` in `Version.xcconfig` already matches the tag—prefer Changesets so `CHANGELOG.md` stays accurate.
-
-`.changeset/config.json` uses `"baseBranch": "main"`. If your default branch is only `master`, change that field to `master`.
+Gatekeeper may prompt on first open for unsigned builds. For distribution, use Developer ID signing and notarization (see [Building and releasing](#building-and-releasing)).
 
 ## Usage
 
-1. Click the menu bar icon to open the popover.
-2. Use **Settings** (gear) to create **personas**—each has a display label, `user.name`, `user.email`, and optional signing key / notes.
-3. Choose a **repository** with **Choose…** or pick from **Recent** (recent repo roots are remembered).
-4. Select a persona and tap **Apply to repo** (writes **local** `.git/config`) or **Apply globally** (writes `~/.gitconfig` via `git config --global`).
+1. Click the menu bar icon to open the GitPersona window.
+2. Open **Settings** (gear) to create **personas**—label, `user.name`, `user.email`, optional signing key and notes. You can enable **Launch at login** there (macOS Login Items / SMAppService as applicable).
+3. Under **Repository**, use **Choose…** to pick any folder inside a clone, or pick a path from **Recents** (last used repo roots are stored).
+4. Select a persona, then **Apply to repo** (writes `<repo>/.git/config`) or **Apply globally** (runs `git config --global`).
 
-The popover shows read-only previews of **local** and **global** identity as reported by `git config`.
+The main window shows read-only previews of **local** and **global** identity from `git config`.
 
-### Limitations (v1)
+### Limitations
 
-- Menu bar apps have no shell “current directory”; you **choose** the repo folder explicitly or via recents.  
-- SSH keys and remote URLs are **not** switched automatically—only Git identity fields Git stores in config.
+- There is no shell “current directory”; you always pick the repo (or a recent).
+- Only Git config identity fields are changed—not SSH keys, remotes, or hosting accounts.
 
-## Architecture
-
-### Layered components
+## How it fits together
 
 ```mermaid
 flowchart LR
-  subgraph ui [UI Layer]
+  subgraph ui [UI]
     MB[MenuBarExtra]
-    Pop[Popover]
-    Set[Settings Window]
+    Pop[Main window]
+    Set[Settings]
   end
-  subgraph domain [Domain]
+  subgraph domain [App]
     PS[PersonaStore]
     GA[GitConfigApplier]
     RM[RepoResolver]
   end
   subgraph io [IO]
-    Proc[Process git]
-    FS[JSON File]
+    Git[git process]
+    Store[(Encrypted store)]
   end
   MB --> Pop
+  MB --> Set
   Pop --> PS
   Set --> PS
   Pop --> RM
   Pop --> GA
-  GA --> Proc
-  RM --> Proc
-  PS --> FS
+  GA --> Git
+  RM --> Git
+  PS --> Store
 ```
 
+| Component | Role |
+|-----------|------|
+| **PersonaStore** | Loads/saves encrypted `personas.store` (AES-GCM via **PersonaVault**; key in Keychain) under `~/Library/Application Support/dev.gitpersona.app/`. Migrates legacy plaintext `personas.json` once, then removes it. |
+| **RepoResolver** | Runs `git rev-parse --show-toplevel` on the chosen directory to resolve the repo root. |
+| **GitConfigApplier** | Reads/writes identity with `git config` (`--local` / `--global`); finds `git` via `/usr/bin/git` or `PATH`. |
 
+### Encrypted store shape
 
-
-| Piece                | Responsibility                                                                                                                                                                                |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PersonaStore**     | Loads/saves encrypted `personas.store` (AES-GCM, key in Keychain) under `~/Library/Application Support/dev.gitpersona.app/`. Migrates legacy plaintext `personas.json` once, then removes it. |
-| **RepoResolver**     | Runs `git rev-parse --show-toplevel` for a chosen directory to confirm a repo root.                                                                                                           |
-| **GitConfigApplier** | Runs `git config` (`--local` / `--global`) to read and write identity fields; resolves `git` via `/usr/bin/git` or `PATH`.                                                                    |
-
-
-### Apply flow
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant Popover
-  participant Store as PersonaStore
-  participant Git as GitConfigApplier
-
-  User->>Popover: Choose repo + persona
-  Popover->>Store: recordRepoPath(root)
-  User->>Popover: Apply to repo
-  Popover->>Git: git -C root config --local user.name
-  Popover->>Git: git -C root config --local user.email
-  Git-->>Popover: success / stderr
-```
-
-
-
-### Persistence (`personas.store`)
-
-On disk the payload is **encrypted**; the decrypted JSON matches this shape:
+Decrypted JSON looks like:
 
 ```json
 {
@@ -146,27 +114,21 @@ On disk the payload is **encrypted**; the decrypted JSON matches this shape:
 }
 ```
 
-If decryption fails (for example truncated file), the app renames the blob to `personas.store.corrupt-<timestamp>` and falls back to legacy `personas.json` when present.
+If decryption fails, the app moves the blob to `personas.store.corrupt-<timestamp>` and may fall back to `personas.json` when present.
 
-### Liquid Glass UI
+### UI notes (Liquid Glass)
 
-- **Popover header**: on macOS 26+, `.glassEffect(.regular, …)` over a clear shape; otherwise `.bar` material.  
-- **Primary actions** (“Apply to repo” / “Apply globally”): wrapped in `GlassChrome.floatingBar`, which applies `.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 14))` on **macOS 26+**, with a material fallback otherwise.  
-- **Lists / forms**: plain inset/grouped styling—no glass on dense content.
+On macOS 26+, chrome uses `.glassEffect` where appropriate (e.g. popover header, primary action bar via `GlassChrome`). Older behavior uses material fallbacks. Dense lists and forms stay on standard grouped styling.
 
 ## System design
 
 ```mermaid
 flowchart TB
-  subgraph macOS [macOS 26 Host]
-    GP[GitPersona.app]
-    FS[(Application Support encrypted store)]
-    GC[~/.gitconfig]
-    LC[ repo /.git/config ]
-  end
-  subgraph toolchain [Developer toolchain]
-    GIT[git executable]
-  end
+  GP[GitPersona.app]
+  FS[(Application Support / personas.store)]
+  GC["~/.gitconfig"]
+  LC["repo/.git/config"]
+  GIT[git]
   GP --> FS
   GP -->|"Apply globally"| GIT
   GIT --> GC
@@ -174,45 +136,36 @@ flowchart TB
   GIT --> LC
 ```
 
+The app does not open network connections; data stays on your Mac.
 
+## Building and releasing
 
-The app does **not** open network connections; data stays on disk on your machine.
+### Versioning with Changesets
 
-## Building & releasing
+Releases follow semver using [Changesets](https://github.com/changesets/changesets). `package.json` holds the version; `npm run version-packages` syncs into [GitPersona/Version.xcconfig](GitPersona/Version.xcconfig) (`MARKETING_VERSION` and bumped `CURRENT_PROJECT_VERSION`).
 
-### CI (GitHub Actions)
+1. `npm install`
+2. After user-visible changes: `npm run changeset`, choose bump level, commit the new file under `.changeset/` with your PR.
+3. Merge to `main`. [changesets.yml](.github/workflows/changesets.yml) opens a **Version packages** PR (changelog + version + `Version.xcconfig`).
+4. Merge **Version packages**. The workflow runs `npm run release`, creating and pushing tag `v*.*.*`.
+5. [versioned-release-after-changesets.yml](.github/workflows/versioned-release-after-changesets.yml) builds the DMG and publishes the GitHub Release (tags from `GITHUB_TOKEN` may not trigger `on.push.tags`, so this follow-up attaches the asset).
 
-On each push to `main` / `master` or on pull requests, `[.github/workflows/build-dmg.yml](.github/workflows/build-dmg.yml)` runs `./scripts/build-dmg.sh` and uploads the `**GitPersona-macos`** workflow artifact only (no GitHub Release).
+**Manual tag:** You can still `git tag v1.2.3 && git push origin v1.2.3` if `MARKETING_VERSION` already matches; Changesets keeps `CHANGELOG.md` aligned.
 
-**Versioned releases** with a downloadable DMG:
+`.changeset/config.json` uses `"baseBranch": "main"`. If your default branch is only `master`, set `baseBranch` to `master`.
 
-- After **[Changesets](.github/workflows/changesets.yml)** publishes a `**v**` tag, **[Versioned release DMG (post-Changesets)](.github/workflows/versioned-release-after-changesets.yml)** builds the DMG and creates or updates the **GitHub Release** for that tag.
-- A **manually pushed** `**v**` tag that triggers Actions will run **Build DMG** on the tag push and attach the DMG to that release.
+### CI
 
-`[.github/workflows/changesets.yml](.github/workflows/changesets.yml)` manages **Version packages** PRs and the `**v**` tag after you merge them (see [Release a new version (Changesets)](#release-a-new-version-changesets)).
+[build-dmg.yml](.github/workflows/build-dmg.yml) uses the `macos-26` runner (Xcode 26 / macOS 26 SDK), matching the app target. Optional secrets for signed DMGs:
 
-The workflow uses the `**macos-26`** GitHub-hosted runner (Xcode 26 + macOS 26 SDK), matching the app’s **macOS 26.0** deployment target and Liquid Glass APIs. Do not use `macos-latest` alone unless that label already maps to a macOS 26 image with Xcode 26 in your org.
+| Secret | Purpose |
+|--------|---------|
+| `SIGN_IDENTITY` | Developer ID Application string for `codesign` |
+| `NOTARY_PROFILE` | `notarytool` keychain profile name |
 
-Optional repository **secrets** for signed / notarized DMGs (same env vars as locally):
+Pass them as workflow `env` only when configured.
 
-
-| Secret           | Maps to                                  |
-| ---------------- | ---------------------------------------- |
-| `SIGN_IDENTITY`  | Developer ID Application identity string |
-| `NOTARY_PROFILE` | `notarytool` keychain profile name       |
-
-
-Expose them in the workflow step:
-
-```yaml
-env:
-  SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
-  NOTARY_PROFILE: ${{ secrets.NOTARY_PROFILE }}
-```
-
-(Only add these if you configure secrets; unsigned artifacts still install with user consent in Privacy & Security.)
-
-### Debug / Release build
+### Xcode build
 
 ```bash
 cd git-persona
@@ -220,80 +173,44 @@ xcodebuild -scheme GitPersona -configuration Release \
   -derivedDataPath ./build/DerivedDataRelease build
 ```
 
-Product: `build/DerivedDataRelease/Build/Products/Release/GitPersona.app`
+App bundle: `build/DerivedDataRelease/Build/Products/Release/GitPersona.app`
 
-### DMG + optional signing / notarization
+### DMG script and notarization
 
 ```bash
 ./scripts/build-dmg.sh
 ```
 
-Environment variables:
+Optional env: `SIGN_IDENTITY`, `NOTARY_PROFILE` (same meaning as in CI). Typical distribution: Release build with hardened runtime → codesign app → DMG → sign DMG → `notarytool submit --wait` → `stapler staple`. See Apple’s [Notarizing macOS software before distribution](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution).
 
+## Privacy and security
 
-| Variable         | Purpose                                                                        |
-| ---------------- | ------------------------------------------------------------------------------ |
-| `SIGN_IDENTITY`  | Apple **Developer ID Application** identity string for `codesign` (app + DMG). |
-| `NOTARY_PROFILE` | Keychain profile name created with `xcrun notarytool store-credentials`.       |
+- No analytics or outbound network from the app.
+- Writes occur when you apply: `~/.git/config` or `~/.gitconfig`, plus the Application Support store; encryption key in Keychain.
+- **App Sandbox is off** so `git` can update configs without the friction common to sandboxed file access.
 
-
-Recommended flow for distribution:
-
-1. Archive or build **Release** with **hardened runtime** (already enabled in the project).
-2. `codesign` the `.app` with your Developer ID.
-3. Build the DMG, sign the DMG.
-4. `notarytool submit … --wait`, then `stapler staple` the DMG so Gatekeeper validates offline.
-
-Apple’s notarization docs: [Notarizing macOS software before distribution](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution).
-
-## Privacy & security
-
-- **No analytics or network** traffic from the app.  
-- **Files touched** only when you apply changes: `~/.gitconfig` and/or `<repo>/.git/config`, plus `~/Library/Application Support/dev.gitpersona.app/personas.store` (Keychain holds the encryption key).  
-- Distributed **outside the Mac App Store** with **App Sandbox disabled** so Git can write configs without repeated security prompts typical of sandboxed file access.
-
-## Project layout
+## Repository layout
 
 ```
 git-persona/
 ├── .changeset/
-├── .github/workflows/
-│   ├── build-dmg.yml
-│   ├── changesets.yml
-│   └── versioned-release-after-changesets.yml
+├── .github/workflows/          # build-dmg, changesets, versioned-release-after-changesets
 ├── GitPersona.xcodeproj/
-├── GitPersona/
-│   ├── GitPersonaApp.swift
-│   ├── MenuBarPopoverView.swift
-│   ├── SettingsView.swift
-│   ├── PersonaStore.swift
-│   ├── PersonaVault.swift
-│   ├── Models.swift
-│   ├── GitConfigApplier.swift
-│   ├── RepoResolver.swift
-│   ├── GlassChrome.swift
-│   └── Assets.xcassets/
-├── docs/
-│   └── logo.svg
-├── scripts/
-│   ├── build-dmg.sh
-│   ├── sync-version-xcconfig.mjs
-│   └── push-release-tag.mjs
+├── GitPersona/                 # Swift sources (app, settings, store, git helpers, glass UI)
+├── docs/logo.svg
+├── scripts/                    # build-dmg.sh, version sync, release tag helpers
 ├── package.json
-├── package-lock.json
 └── README.md
 ```
 
 ## Troubleshooting
 
-
-| Issue                       | Suggestion                                                                                                            |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| “Git executable not found”  | Install Xcode Command Line Tools: `xcode-select --install`.                                                           |
-| Apply fails with repo error | Ensure the folder is inside a Git work tree (`git rev-parse` succeeds).                                               |
-| Version PR never opens      | Ensure `.changeset/*.md` exists on `main` and **Changesets** workflow has `contents: write` + `pull-requests: write`. |
-
+| Symptom | What to try |
+|---------|-------------|
+| Git executable not found | `xcode-select --install` or ensure `git` is on `PATH`. |
+| Repo / apply error | Pick a folder inside a real Git work tree (`git rev-parse` works there). |
+| Changesets “Version packages” PR never opens | Ensure a `.changeset/*.md` exists on `main` and the workflow has `contents: write` and `pull-requests: write`. |
 
 ## License
 
-No license file is bundled by default; add one if you publish the repo publicly.
+No license file is included by default; add one if you publish the repository publicly.
