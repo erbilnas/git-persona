@@ -94,7 +94,7 @@ flowchart LR
 
 | Piece                | Responsibility                                                                                                                               |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PersonaStore**     | Loads/saves `personas.json` under `~/Library/Application Support/dev.gitpersona.app/`. Maintains persona list and bounded recent repo paths. |
+| **PersonaStore**     | Loads/saves encrypted `personas.store` (AES-GCM, key in Keychain) under `~/Library/Application Support/dev.gitpersona.app/`. Migrates legacy plaintext `personas.json` once, then removes it. |
 | **RepoResolver**     | Runs `git rev-parse --show-toplevel` for a chosen directory to confirm a repo root.                                                          |
 | **GitConfigApplier** | Runs `git config` (`--local` / `--global`) to read and write identity fields; resolves `git` via `/usr/bin/git` or `PATH`.                   |
 
@@ -118,7 +118,9 @@ sequenceDiagram
 
 
 
-### Persistence schema (`personas.json`)
+### Persistence (`personas.store`)
+
+On disk the payload is **encrypted**; the decrypted JSON matches this shape:
 
 ```json
 {
@@ -137,6 +139,8 @@ sequenceDiagram
 }
 ```
 
+If decryption fails (for example truncated file), the app renames the blob to `personas.store.corrupt-<timestamp>` and falls back to legacy `personas.json` when present.
+
 ### Liquid Glass UI
 
 - **Popover header**: standard `.background(.bar)` for readability.  
@@ -149,7 +153,7 @@ sequenceDiagram
 flowchart TB
   subgraph macOS [macOS 26 Host]
     GP[GitPersona.app]
-    FS[(Application Support JSON)]
+    FS[(Application Support encrypted store)]
     GC[~/.gitconfig]
     LC[ repo /.git/config ]
   end
@@ -231,7 +235,7 @@ Apple’s notarization docs: [Notarizing macOS software before distribution](htt
 ## Privacy & security
 
 - **No analytics or network** traffic from the app.  
-- **Files touched** only when you apply changes: `~/.gitconfig` and/or `<repo>/.git/config`, plus `~/Library/Application Support/dev.gitpersona.app/personas.json`.  
+- **Files touched** only when you apply changes: `~/.gitconfig` and/or `<repo>/.git/config`, plus `~/Library/Application Support/dev.gitpersona.app/personas.store` (Keychain holds the encryption key).  
 - Distributed **outside the Mac App Store** with **App Sandbox disabled** so Git can write configs without repeated security prompts typical of sandboxed file access.
 
 ## Project layout
@@ -244,6 +248,7 @@ git-persona/
 │   ├── MenuBarPopoverView.swift
 │   ├── SettingsView.swift
 │   ├── PersonaStore.swift
+│   ├── PersonaVault.swift
 │   ├── Models.swift
 │   ├── GitConfigApplier.swift
 │   ├── RepoResolver.swift
