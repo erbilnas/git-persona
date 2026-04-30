@@ -16,7 +16,8 @@ permissions:
 
 jobs:
   dmg:
-    runs-on: macos-latest
+    # macOS 26 + Xcode 26 SDK required (Liquid Glass APIs, deployment target 26.0).
+    runs-on: macos-26
     permissions:
       # Needed to create releases when pushing version tags on the default branch workflow.
       contents: write

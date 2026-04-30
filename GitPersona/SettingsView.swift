@@ -308,8 +308,14 @@ struct SettingsView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
+            if #available(macOS 26.0, *) {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(.clear)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 14))
+            } else {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+            }
         }
         .overlay {
             RoundedRectangle(cornerRadius: 14)
