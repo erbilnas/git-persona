@@ -10,6 +10,7 @@
 		B10101 /* GitPersonaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10101 /* GitPersonaApp.swift */; };
 		B10102 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10102 /* Models.swift */; };
 		B10103 /* PersonaStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10103 /* PersonaStore.swift */; };
+		B10112 /* PersonaVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10112 /* PersonaVault.swift */; };
 		B10104 /* GitConfigApplier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10104 /* GitConfigApplier.swift */; };
 		B10105 /* RepoResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10105 /* RepoResolver.swift */; };
 		B10106 /* GlassChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10106 /* GlassChrome.swift */; };
@@ -24,6 +25,7 @@
 		F10101 /* GitPersonaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitPersonaApp.swift; sourceTree = "<group>"; };
 		F10102 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		F10103 /* PersonaStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaStore.swift; sourceTree = "<group>"; };
+		F10112 /* PersonaVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaVault.swift; sourceTree = "<group>"; };
 		F10104 /* GitConfigApplier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitConfigApplier.swift; sourceTree = "<group>"; };
 		F10105 /* RepoResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepoResolver.swift; sourceTree = "<group>"; };
 		F10106 /* GlassChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassChrome.swift; sourceTree = "<group>"; };
@@ -60,6 +62,7 @@
 				F10101 /* GitPersonaApp.swift */,
 				F10102 /* Models.swift */,
 				F10103 /* PersonaStore.swift */,
+				F10112 /* PersonaVault.swift */,
 				F10104 /* GitConfigApplier.swift */,
 				F10105 /* RepoResolver.swift */,
 				F10106 /* GlassChrome.swift */,
@@ -151,6 +154,7 @@
 				B10101 /* GitPersonaApp.swift in Sources */,
 				B10102 /* Models.swift in Sources */,
 				B10103 /* PersonaStore.swift in Sources */,
+				B10112 /* PersonaVault.swift in Sources */,
 				B10104 /* GitConfigApplier.swift in Sources */,
 				B10105 /* RepoResolver.swift in Sources */,
 				B10106 /* GlassChrome.swift in Sources */,

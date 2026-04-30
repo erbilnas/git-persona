@@ -5,7 +5,8 @@ import Observation
 @MainActor
 final class PersonaStore {
     private(set) var document: PersonaDocument
-    private let fileURL: URL
+    private let storeURL: URL
+    private let legacyPlainURL: URL
     private let maxRecentRepos = 12
 
     var personas: [Persona] {
@@ -19,17 +20,57 @@ final class PersonaStore {
     init() {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let folder = support.appendingPathComponent("dev.gitpersona.app", isDirectory: true)
-        self.fileURL = folder.appendingPathComponent("personas.json", isDirectory: false)
+        self.storeURL = folder.appendingPathComponent("personas.store", isDirectory: false)
+        self.legacyPlainURL = folder.appendingPathComponent("personas.json", isDirectory: false)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
-        if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode(PersonaDocument.self, from: data)
-        {
-            self.document = decoded
+        if let doc = Self.loadDocument(storeURL: storeURL, legacyPlainURL: legacyPlainURL) {
+            self.document = doc
         } else {
             self.document = PersonaDocument()
             persist()
         }
+        if FileManager.default.fileExists(atPath: legacyPlainURL.path) {
+            persist()
+        }
+    }
+
+    private static func loadDocument(storeURL: URL, legacyPlainURL: URL) -> PersonaDocument? {
+        let fm = FileManager.default
+
+        if fm.fileExists(atPath: storeURL.path),
+           let wrapped = try? Data(contentsOf: storeURL),
+           wrapped.count > 4
+        {
+            do {
+                let plain = try PersonaVault.decrypt(wrapped)
+                return try JSONDecoder().decode(PersonaDocument.self, from: plain)
+            } catch {
+                Self.backupCorruptEncryptedFile(storeURL)
+                if fm.fileExists(atPath: legacyPlainURL.path),
+                   let data = try? Data(contentsOf: legacyPlainURL),
+                   let decoded = try? JSONDecoder().decode(PersonaDocument.self, from: data)
+                {
+                    return decoded
+                }
+                return nil
+            }
+        }
+
+        if fm.fileExists(atPath: legacyPlainURL.path),
+           let data = try? Data(contentsOf: legacyPlainURL),
+           let decoded = try? JSONDecoder().decode(PersonaDocument.self, from: data)
+        {
+            return decoded
+        }
+
+        return nil
+    }
+
+    private static func backupCorruptEncryptedFile(_ url: URL) {
+        let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
+        let dest = url.deletingLastPathComponent().appendingPathComponent("personas.store.corrupt-\(stamp)")
+        try? FileManager.default.moveItem(at: url, to: dest)
     }
 
     func upsert(_ persona: Persona) {
@@ -85,8 +126,12 @@ final class PersonaStore {
 
     private func persist() {
         do {
-            let data = try JSONEncoder().encode(document)
-            try data.write(to: fileURL, options: [.atomic])
+            let json = try JSONEncoder().encode(document)
+            let wrapped = try PersonaVault.encrypt(json)
+            try wrapped.write(to: storeURL, options: [.atomic])
+            if FileManager.default.fileExists(atPath: legacyPlainURL.path) {
+                try? FileManager.default.removeItem(at: legacyPlainURL)
+            }
         } catch {
             // Non-fatal; UI could show alert if needed
         }
