@@ -20,7 +20,8 @@ struct SettingsView: View {
         } detail: {
             detailPane
         }
-        .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 340)
+        // Sidebar: compact default, user-resizable up to a modest cap so the list does not sprawl.
+        .navigationSplitViewColumnWidth(min: 176, ideal: 212, max: 260)
         .frame(minWidth: 640, minHeight: 460)
         .onAppear {
             if selection == nil {
@@ -70,6 +71,7 @@ struct SettingsView: View {
                         ForEach(store.personas) { p in
                             personaSidebarRow(p)
                                 .tag(Optional(p.id))
+                                .listRowInsets(EdgeInsets(top: 5, leading: 10, bottom: 5, trailing: 10))
                                 .contextMenu {
                                     Button("Duplicate") {
                                         duplicatePersona(sourceID: p.id)
@@ -85,9 +87,13 @@ struct SettingsView: View {
                         }
                     } header: {
                         Text("Saved personas")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .textCase(nil)
                     }
                 }
                 .listStyle(.sidebar)
+                .environment(\.defaultMinListRowHeight, 52)
 
                 if store.personas.isEmpty {
                     ContentUnavailableView {
@@ -112,8 +118,8 @@ struct SettingsView: View {
                 .foregroundStyle(.tertiary)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
                 .background(Color(nsColor: .windowBackgroundColor))
         }
         .navigationTitle("GitPersona")
@@ -150,22 +156,26 @@ struct SettingsView: View {
     }
 
     private func personaSidebarRow(_ p: Persona) -> some View {
-        HStack(spacing: 10) {
+        HStack(alignment: .center, spacing: 8) {
             Image(systemName: "person.crop.circle.fill")
                 .symbolRenderingMode(.hierarchical)
-                .font(.title2)
+                .font(.title3)
                 .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 2) {
+                .frame(width: 26, alignment: .center)
+            VStack(alignment: .leading, spacing: 3) {
                 Text(p.displayName.isEmpty ? "Untitled persona" : p.displayName)
-                    .font(.body.weight(.medium))
-                Text(emailSubtitle(for: p))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
+                    .truncationMode(.tail)
+                Text(emailSubtitle(for: p))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 2)
         .contentShape(Rectangle())
     }
 
