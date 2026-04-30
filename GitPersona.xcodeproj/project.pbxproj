@@ -18,6 +18,7 @@
 		B10108 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10108 /* SettingsView.swift */; };
 		B10109 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10109 /* Assets.xcassets */; };
 		B10110 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10111 /* AppVersion.swift */; };
+		B10113 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10113 /* LaunchAtLogin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 		F10109 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F10110 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		F10111 /* AppVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersion.swift; sourceTree = "<group>"; };
+		F10113 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +71,7 @@
 				F10107 /* MenuBarPopoverView.swift */,
 				F10108 /* SettingsView.swift */,
 				F10111 /* AppVersion.swift */,
+				F10113 /* LaunchAtLogin.swift */,
 				F10109 /* Assets.xcassets */,
 			);
 			path = GitPersona;
@@ -161,6 +164,7 @@
 				B10107 /* MenuBarPopoverView.swift in Sources */,
 				B10108 /* SettingsView.swift in Sources */,
 				B10110 /* AppVersion.swift in Sources */,
+				B10113 /* LaunchAtLogin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,9 +1,12 @@
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(PersonaStore.self) private var store
     @State private var selection: UUID?
     @State private var personaPendingDeletion: Persona?
+    @State private var launchAtLoginRefresh = 0
+    @State private var launchAtLoginError: String?
     @FocusState private var focusedField: SettingsFocusField?
 
     private enum SettingsFocusField: Hashable {
@@ -14,14 +17,15 @@ struct SettingsView: View {
         case notes
     }
 
+    private static let projectPageURL = URL(string: "https://github.com/erbilnas/git-persona")
+
     var body: some View {
         NavigationSplitView {
-            sidebar
+            sidebarList
         } detail: {
             detailPane
         }
-        // Sidebar: compact default, user-resizable up to a modest cap so the list does not sprawl.
-        .navigationSplitViewColumnWidth(min: 176, ideal: 212, max: 260)
+        .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 320)
         .frame(minWidth: 640, minHeight: 460)
         .onAppear {
             if selection == nil {
@@ -56,6 +60,14 @@ struct SettingsView: View {
         } message: {
             Text("This removes the saved persona from GitPersona. Your Git configs are not changed.")
         }
+        .alert("Open at login", isPresented: Binding(
+            get: { launchAtLoginError != nil },
+            set: { if !$0 { launchAtLoginError = nil } }
+        )) {
+            Button("OK", role: .cancel) { launchAtLoginError = nil }
+        } message: {
+            Text(launchAtLoginError ?? "")
+        }
     }
 
     private var deleteDialogTitle: String {
@@ -63,66 +75,147 @@ struct SettingsView: View {
         return "Delete “\(p.displayName)”?"
     }
 
-    private var sidebar: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                List(selection: $selection) {
-                    Section {
-                        ForEach(store.personas) { p in
-                            personaSidebarRow(p)
-                                .tag(Optional(p.id))
-                                .listRowInsets(EdgeInsets(top: 5, leading: 10, bottom: 5, trailing: 10))
-                                .contextMenu {
-                                    Button("Duplicate") {
-                                        duplicatePersona(sourceID: p.id)
-                                    }
-                                    Divider()
-                                    Button("Delete…", role: .destructive) {
-                                        personaPendingDeletion = p
-                                    }
-                                }
+    private var openAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: {
+                LaunchAtLogin.isEnabled || LaunchAtLogin.needsUserApproval
+            },
+            set: { newValue in
+                do {
+                    try LaunchAtLogin.setEnabled(newValue)
+                    launchAtLoginRefresh += 1
+                } catch {
+                    launchAtLoginError = error.localizedDescription
+                }
+            }
+        )
+    }
+
+    private var appDisplayName: String {
+        let s = (Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return s.isEmpty ? "GitPersona" : s
+    }
+
+    /// Single scrollable sidebar: avoids VStack + List flex bugs and clipped “About”.
+    private var sidebarList: some View {
+        List(selection: $selection) {
+            Section {
+                Group {
+                    Toggle("Open at login", isOn: openAtLoginBinding)
+                        .help("Launch GitPersona when you log in to this Mac.")
+
+                    if LaunchAtLogin.needsUserApproval {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Approve GitPersona under Login Items to finish enabling start at login.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Button("Open Login Items…") {
+                                LaunchAtLogin.openLoginItemsSettings()
+                            }
+                            .buttonStyle(.link)
+                            .controlSize(.small)
                         }
-                        .onMove { source, destination in
-                            store.movePersonas(fromOffsets: source, toOffset: destination)
-                        }
-                    } header: {
-                        Text("Saved personas")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .textCase(nil)
                     }
                 }
-                .listStyle(.sidebar)
-                .environment(\.defaultMinListRowHeight, 52)
+                .id(launchAtLoginRefresh)
+            } header: {
+                Text("General")
+            }
 
+            Section {
                 if store.personas.isEmpty {
-                    ContentUnavailableView {
+                    VStack(alignment: .leading, spacing: 10) {
                         Label("No personas yet", systemImage: "person.crop.circle.dashed")
-                    } description: {
+                            .font(.subheadline.weight(.medium))
                         Text("Create one to switch Git name, email, and signing options from the menu bar.")
-                    } actions: {
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                         Button("Add persona") {
                             addPersona()
                         }
                         .keyboardShortcut("n", modifiers: .command)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.background.opacity(0.85))
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    ForEach(store.personas) { p in
+                        personaSidebarRow(p)
+                            .tag(Optional(p.id))
+                            .listRowInsets(EdgeInsets(top: 5, leading: 8, bottom: 5, trailing: 8))
+                            .contextMenu {
+                                Button("Duplicate") {
+                                    duplicatePersona(sourceID: p.id)
+                                }
+                                Divider()
+                                Button("Delete…", role: .destructive) {
+                                    personaPendingDeletion = p
+                                }
+                            }
+                    }
+                    .onMove { source, destination in
+                        store.movePersonas(fromOffsets: source, toOffset: destination)
+                    }
                 }
+            } header: {
+                Text("Saved personas")
             }
 
-            Divider()
+            Section {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .center, spacing: 12) {
+                        Image(decorative: "BrandLogo")
+                            .resizable()
+                            .interpolation(.high)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 40, height: 40)
 
-            Text("Version \(AppVersion.fullDescription)")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .textSelection(.enabled)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(appDisplayName)
+                                .font(.headline)
+                            Text(AppVersion.fullDescription)
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    Text("Switch Git author identity per repository or globally from the menu bar.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if let copyright = Bundle.main.object(forInfoDictionaryKey: "NSHumanReadableCopyright") as? String,
+                       !copyright.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text(copyright)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    if let url = Self.projectPageURL {
+                        Link(destination: url) {
+                            Label("Project on GitHub", systemImage: "arrow.up.right.square")
+                                .font(.caption)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Color(nsColor: .windowBackgroundColor))
+            } header: {
+                Text("About")
+            }
         }
+        .listStyle(.sidebar)
+        .environment(\.defaultMinListRowHeight, 52)
         .navigationTitle("GitPersona")
+        .onAppear { launchAtLoginRefresh += 1 }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            launchAtLoginRefresh += 1
+        }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
@@ -192,7 +285,7 @@ struct SettingsView: View {
         if let id = selection, store.persona(id: id) != nil {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    personaHeaderCard(personaID: id)
+                    personaSummary(personaID: id)
 
                     Form {
                         Section {
@@ -284,7 +377,7 @@ struct SettingsView: View {
         }
     }
 
-    private func personaHeaderCard(personaID: UUID) -> some View {
+    private func personaSummary(personaID: UUID) -> some View {
         let p = store.persona(id: personaID)
         return HStack(alignment: .center, spacing: 14) {
             Image(systemName: "person.crop.circle.fill")
@@ -307,19 +400,13 @@ struct SettingsView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            if #available(macOS 26.0, *) {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(.clear)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 14))
-            } else {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(nsColor: .controlBackgroundColor))
-            }
-        }
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
         .overlay {
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
     }
 
@@ -381,7 +468,6 @@ struct SettingsView: View {
         )
     }
 
-    /// Lightweight sanity check — Git allows unusual strings; we only nudge the user.
     private static func looksLikeEmail(_ s: String) -> Bool {
         let parts = s.split(separator: "@", omittingEmptySubsequences: false)
         guard parts.count == 2 else { return false }

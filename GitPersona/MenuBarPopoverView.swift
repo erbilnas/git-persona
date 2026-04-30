@@ -92,13 +92,22 @@ struct MenuBarPopoverView: View {
                 .textSelection(.enabled)
 
             Button {
-                openSettings()
+                activateAppAndOpenSettings()
             } label: {
                 Label("Settings", systemImage: "gearshape")
                     .labelStyle(.iconOnly)
             }
             .buttonStyle(.borderless)
             .help("Open Settings to add or edit personas")
+
+            Button {
+                NSApp.terminate(nil)
+            } label: {
+                Label("Quit GitPersona", systemImage: "power")
+                    .labelStyle(.iconOnly)
+            }
+            .buttonStyle(.borderless)
+            .help("Quit GitPersona")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -125,7 +134,7 @@ struct MenuBarPopoverView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     Button {
-                        openSettings()
+                        activateAppAndOpenSettings()
                     } label: {
                         Label("Open Settings", systemImage: "plus.circle.fill")
                     }
@@ -418,22 +427,57 @@ struct MenuBarPopoverView: View {
         selectedPersonaID = store.personas.first?.id
     }
 
-    private func chooseFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.prompt = "Choose folder"
-        panel.message = "Select a folder inside your Git repository."
-        if let url = repoURL {
-            panel.directoryURL = url
-        } else if let first = store.lastRepoPaths.first {
-            panel.directoryURL = URL(fileURLWithPath: first)
+    private func hostingWindowForOpenPanel() -> NSWindow? {
+        if let key = NSApp.keyWindow, key.isVisible {
+            return key
         }
+        return NSApp.windows.first { $0.isVisible && $0.canBecomeKey }
+    }
 
-        if panel.runModal() == .OK, let url = panel.url {
-            repoURL = url
-            applyRepoSelection(url)
+    private func chooseFolder() {
+        Task { @MainActor in
+            NSApp.activate(ignoringOtherApps: true)
+            await Task.yield()
+
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = false
+            panel.canChooseDirectories = true
+            panel.allowsMultipleSelection = false
+            panel.prompt = "Choose folder"
+            panel.message = "Select a folder inside your Git repository."
+            if let url = repoURL {
+                panel.directoryURL = url
+            } else if let first = store.lastRepoPaths.first {
+                panel.directoryURL = URL(fileURLWithPath: first)
+            }
+
+            if let window = hostingWindowForOpenPanel() {
+                await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                    panel.beginSheetModal(for: window) { response in
+                        Task { @MainActor in
+                            if response == .OK, let url = panel.url {
+                                repoURL = url
+                                applyRepoSelection(url)
+                            }
+                            continuation.resume()
+                        }
+                    }
+                }
+            } else if panel.runModal() == .OK, let url = panel.url {
+                repoURL = url
+                applyRepoSelection(url)
+            }
+        }
+    }
+
+    private func activateAppAndOpenSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        openSettings()
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            for window in NSApp.windows where window.isVisible && window.level == .normal {
+                window.makeKeyAndOrderFront(nil)
+            }
         }
     }
 
