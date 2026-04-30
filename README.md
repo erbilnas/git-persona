@@ -1,8 +1,6 @@
 # GitPersona
 
-`git-persona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.
-
-   
+`GitPersona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.   
 
 ---
 
@@ -40,7 +38,7 @@ Releases are **semver-driven** with [Changesets](https://github.com/changesets/c
 
 1. Install tooling: `npm install`
 2. After user-visible work, run `**npm run changeset`**, pick the bump level, and commit the generated file under `.changeset/` with your PR.
-3. Merge to `**main**`. The **[Changesets](.github/workflows/changesets.yml)** workflow opens a **Version packages** PR (changelog + version bump + `Version.xcconfig` sync).
+3. Merge to `**main`**. The **[Changesets](.github/workflows/changesets.yml)** workflow opens a **Version packages** PR (changelog + version bump + `Version.xcconfig` sync).
 4. Merge **Version packages**. The same workflow runs `**npm run release`**, which creates and pushes tag `**v*.*.*`** matching `package.json`.
 5. The **[Build DMG](.github/workflows/build-dmg.yml)** workflow runs on that tag and publishes the **GitHub Release** with `GitPersona-<version>.dmg`.
 

@@ -1,4 +1,7 @@
 # Opens "Version packages" PRs from .changeset/*.md and, after merge, tags v* for DMG builds.
+# Tag pushes from the default GITHUB_TOKEN do not trigger other workflows; DMG releases
+# are completed by `.github/workflows/versioned-release-after-changesets.yml` (workflow_run).
+# Optional: set a PAT as GITHUB_TOKEN in this job if you want `on: push: tags` to fire too.
 name: Changesets
 
 on:
