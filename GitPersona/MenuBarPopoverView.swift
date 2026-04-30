@@ -427,13 +427,6 @@ struct MenuBarPopoverView: View {
         selectedPersonaID = store.personas.first?.id
     }
 
-    private func hostingWindowForOpenPanel() -> NSWindow? {
-        if let key = NSApp.keyWindow, key.isVisible {
-            return key
-        }
-        return NSApp.windows.first { $0.isVisible && $0.canBecomeKey }
-    }
-
     private func chooseFolder() {
         Task { @MainActor in
             NSApp.activate(ignoringOtherApps: true)
@@ -451,21 +444,17 @@ struct MenuBarPopoverView: View {
                 panel.directoryURL = URL(fileURLWithPath: first)
             }
 
-            if let window = hostingWindowForOpenPanel() {
-                await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                    panel.beginSheetModal(for: window) { response in
-                        Task { @MainActor in
-                            if response == .OK, let url = panel.url {
-                                repoURL = url
-                                applyRepoSelection(url)
-                            }
-                            continuation.resume()
+            // beginSheetModal on MenuBarExtra windows often dismisses the panel immediately.
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                panel.begin { response in
+                    Task { @MainActor in
+                        if response == .OK, let url = panel.url {
+                            repoURL = url
+                            applyRepoSelection(url)
                         }
+                        continuation.resume()
                     }
                 }
-            } else if panel.runModal() == .OK, let url = panel.url {
-                repoURL = url
-                applyRepoSelection(url)
             }
         }
     }
