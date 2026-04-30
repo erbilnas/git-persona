@@ -1,6 +1,8 @@
 # GitPersona
 
-GitPersona logo
+<p align="center">
+  <img src="docs/logo.png" alt="GitPersona" width="128" height="128" />
+</p>
 
 **GitPersona** (`git-persona`) is a minimal macOS menu bar utility for switching Git commit identities—`user.name`, `user.email`, and optional `user.signingkey`—per repository or globally. It targets **macOS 26+** and uses SwiftUI **Liquid Glass** materials on floating chrome (popover action bar), aligned with Apple’s design guidance for navigation-layer glass rather than dense list backgrounds.
 
