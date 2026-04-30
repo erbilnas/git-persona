@@ -1,6 +1,7 @@
 # Builds a Release DMG on every push (artifact).
 # - Push to main/master: rolling pre-release at tag `continuous` + workflow artifact.
-# - Push tag v*: versioned GitHub Release + artifact.
+# - Push tag v*: versioned GitHub Release + artifact (only if the tag push was not made
+#   with the default GITHUB_TOKEN; see `versioned-release-after-changesets.yml`).
 
 name: Build DMG
 

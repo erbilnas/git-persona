@@ -1,0 +1,109 @@
+# Changesets publishes with the repo GITHUB_TOKEN; tag pushes from that token do not
+# trigger `on: push: tags` workflows. This workflow runs after Changesets finishes and,
+# when HEAD matches `v` + package.json version, builds the DMG and attaches it to the
+# same tag release (same outcome as dont-be-afk style GitHub Releases with assets).
+
+name: Versioned release DMG (post-Changesets)
+
+on:
+  workflow_run:
+    workflows: ["Changesets"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  detect-version-tag:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.head_branch == 'main' ||
+       github.event.workflow_run.head_branch == 'master')
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+      sha: ${{ steps.check.outputs.sha }}
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - name: Checkout Changesets head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Detect publish tag at HEAD
+        id: check
+        run: |
+          set -euo pipefail
+          VERSION=$(jq -r .version package.json)
+          TAG="v${VERSION}"
+          HEAD=$(git rev-parse HEAD)
+          git fetch --tags --force
+          if ! git rev-parse "$TAG^{commit}" >/dev/null 2>&1; then
+            echo "No tag $TAG; Changesets did not publish on this run."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "sha=$HEAD" >> "$GITHUB_OUTPUT"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          RESOLVED=$(git rev-parse "$TAG^{commit}")
+          if [ "$RESOLVED" != "$HEAD" ]; then
+            echo "Tag $TAG does not point at HEAD; skipping."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "sha=$HEAD" >> "$GITHUB_OUTPUT"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "build=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Will build DMG for $TAG at $HEAD"
+
+  publish-dmg:
+    needs: [detect-version-tag]
+    if: needs.detect-version-tag.outputs.build == 'true'
+    runs-on: macos-26
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.detect-version-tag.outputs.sha }}
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Build DMG
+        env:
+          SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
+          NOTARY_PROFILE: ${{ secrets.NOTARY_PROFILE }}
+        run: ./scripts/build-dmg.sh
+
+      - name: Locate DMG
+        id: dmg
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist/GitPersona-*.dmg)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "error: expected dist/GitPersona-<version>.dmg" >&2
+            ls -la dist || true
+            exit 1
+          fi
+          echo "file=${files[0]}" >> "$GITHUB_OUTPUT"
+          echo "Built artifact: ${files[0]}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GitPersona-macos-versioned
+          path: ${{ steps.dmg.outputs.file }}
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.detect-version-tag.outputs.tag }}
+          name: Release ${{ needs.detect-version-tag.outputs.tag }}
+          files: ${{ steps.dmg.outputs.file }}
+          generate_release_notes: true
+          make_latest: true

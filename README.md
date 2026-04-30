@@ -1,5 +1,3 @@
-
-
 # GitPersona
 
 `GitPersona` — switch `user.name`, `user.email`, and optional `user.signingkey` per repository or globally, from the menu bar.   
