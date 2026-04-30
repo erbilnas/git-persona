@@ -1,10 +1,24 @@
-# GitPersona
+<h1 align="center">GitPersona</h1>
 
 <p align="center">
-  <img src="docs/logo.png" alt="GitPersona" width="128" height="128" />
+  <img src="docs/logo.svg" width="112" height="112" alt="GitPersona icon" />
 </p>
 
-**GitPersona** (`git-persona`) is a minimal macOS menu bar utility for switching Git commit identities—`user.name`, `user.email`, and optional `user.signingkey`—per repository or globally. It targets **macOS 26+** and uses SwiftUI **Liquid Glass** materials on floating chrome (popover action bar), aligned with Apple’s design guidance for navigation-layer glass rather than dense list backgrounds.
+<p align="center">
+  <strong><code>git-persona</code></strong> — switch <code>user.name</code>, <code>user.email</code>, and optional <code>user.signingkey</code> per repository or globally, from the menu bar.
+</p>
+
+<p align="center">
+  <a href="https://github.com/erbilnas/git-persona/actions/workflows/build-dmg.yml"><img src="https://github.com/erbilnas/git-persona/actions/workflows/build-dmg.yml/badge.svg?branch=main" alt="Build DMG" /></a>
+  &nbsp;
+  <img src="https://img.shields.io/badge/macOS-26%2B-0d9488?logo=apple&logoColor=white" alt="macOS 26+" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6" />
+</p>
+
+---
+
+SwiftUI **Liquid Glass** on the popover action bar; standard grouped materials in Settings. **No** analytics or network traffic from the app.
 
 ## Requirements
 
@@ -257,7 +271,7 @@ git-persona/
 │   ├── GlassChrome.swift
 │   └── Assets.xcassets/
 ├── docs/
-│   └── logo.png
+│   └── logo.svg
 ├── scripts/
 │   └── build-dmg.sh
 └── README.md
