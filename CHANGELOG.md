@@ -1,5 +1,11 @@
 # git-persona
 
+## 1.2.0
+
+### Minor Changes
+
+- a19861d: feat: change settings ui
+
 ## 1.1.1
 
 ### Patch Changes
