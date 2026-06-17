@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct MenuBarPopoverView: View {
-    @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
     @Environment(PersonaStore.self) private var store
     @State private var selectedPersonaID: UUID?
     @State private var repoURL: URL?
@@ -92,7 +92,7 @@ struct MenuBarPopoverView: View {
                 .textSelection(.enabled)
 
             Button {
-                activateAppAndOpenSettings()
+                SettingsWindowOpener.open(openWindow: openWindow)
             } label: {
                 Label("Settings", systemImage: "gearshape")
                     .labelStyle(.iconOnly)
@@ -134,7 +134,7 @@ struct MenuBarPopoverView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     Button {
-                        activateAppAndOpenSettings()
+                        SettingsWindowOpener.open(pane: .personas, openWindow: openWindow)
                     } label: {
                         Label("Open Settings", systemImage: "plus.circle.fill")
                     }
@@ -459,16 +459,6 @@ struct MenuBarPopoverView: View {
         }
     }
 
-    private func activateAppAndOpenSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        openSettings()
-        DispatchQueue.main.async {
-            NSApp.activate(ignoringOtherApps: true)
-            for window in NSApp.windows where window.isVisible && window.level == .normal {
-                window.makeKeyAndOrderFront(nil)
-            }
-        }
-    }
 
     private func applyRepoSelection(_ url: URL) {
         do {

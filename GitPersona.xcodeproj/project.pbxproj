@@ -15,7 +15,11 @@
 		B10105 /* RepoResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10105 /* RepoResolver.swift */; };
 		B10106 /* GlassChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10106 /* GlassChrome.swift */; };
 		B10107 /* MenuBarPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10107 /* MenuBarPopoverView.swift */; };
-		B10108 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10108 /* SettingsView.swift */; };
+		B10108 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10108 /* MainView.swift */; };
+		B10114 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10114 /* AppDelegate.swift */; };
+		B10115 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10115 /* SettingsComponents.swift */; };
+		B10116 /* SettingsPaneViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10116 /* SettingsPaneViews.swift */; };
+		B10117 /* SettingsWindowOpener.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10117 /* SettingsWindowOpener.swift */; };
 		B10109 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10109 /* Assets.xcassets */; };
 		B10110 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10111 /* AppVersion.swift */; };
 		B10113 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10113 /* LaunchAtLogin.swift */; };
@@ -31,7 +35,11 @@
 		F10105 /* RepoResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepoResolver.swift; sourceTree = "<group>"; };
 		F10106 /* GlassChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassChrome.swift; sourceTree = "<group>"; };
 		F10107 /* MenuBarPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPopoverView.swift; sourceTree = "<group>"; };
-		F10108 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F10108 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		F10114 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		F10115 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
+		F10116 /* SettingsPaneViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneViews.swift; sourceTree = "<group>"; };
+		F10117 /* SettingsWindowOpener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowOpener.swift; sourceTree = "<group>"; };
 		F10109 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F10110 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		F10111 /* AppVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersion.swift; sourceTree = "<group>"; };
@@ -62,6 +70,7 @@
 			children = (
 				F10110 /* Version.xcconfig */,
 				F10101 /* GitPersonaApp.swift */,
+				F10114 /* AppDelegate.swift */,
 				F10102 /* Models.swift */,
 				F10103 /* PersonaStore.swift */,
 				F10112 /* PersonaVault.swift */,
@@ -69,7 +78,10 @@
 				F10105 /* RepoResolver.swift */,
 				F10106 /* GlassChrome.swift */,
 				F10107 /* MenuBarPopoverView.swift */,
-				F10108 /* SettingsView.swift */,
+				F10108 /* MainView.swift */,
+				F10115 /* SettingsComponents.swift */,
+				F10116 /* SettingsPaneViews.swift */,
+				F10117 /* SettingsWindowOpener.swift */,
 				F10111 /* AppVersion.swift */,
 				F10113 /* LaunchAtLogin.swift */,
 				F10109 /* Assets.xcassets */,
@@ -162,7 +174,11 @@
 				B10105 /* RepoResolver.swift in Sources */,
 				B10106 /* GlassChrome.swift in Sources */,
 				B10107 /* MenuBarPopoverView.swift in Sources */,
-				B10108 /* SettingsView.swift in Sources */,
+				B10108 /* MainView.swift in Sources */,
+				B10114 /* AppDelegate.swift in Sources */,
+				B10115 /* SettingsComponents.swift in Sources */,
+				B10116 /* SettingsPaneViews.swift in Sources */,
+				B10117 /* SettingsWindowOpener.swift in Sources */,
 				B10110 /* AppVersion.swift in Sources */,
 				B10113 /* LaunchAtLogin.swift in Sources */,
 			);
